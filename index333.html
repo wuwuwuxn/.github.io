@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行政处罚数据分析报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .table-hover:hover {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 头部 -->
+    <header class="gradient-bg text-white py-8">
+        <div class="container mx-auto px-6">
+            <h1 class="text-4xl font-bold mb-2">
+                <i class="fas fa-gavel mr-3"></i>
+                行政处罚数据分析报告
+            </h1>
+            <p class="text-xl opacity-90">基于Excel文件的全量案例分析与汇总</p>
+        </div>
+    </header>
+
+    <!-- 数据概览 -->
+    <section class="py-8">
+        <div class="container mx-auto px-6">
+            <div class="bg-white rounded-lg card-shadow p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">
+                    <i class="fas fa-chart-pie mr-2 text-blue-600"></i>
+                    数据概览
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6" id="summary-cards">
+                    <!-- 动态生成概览卡片 -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 模块1：处分类型统计 -->
+    <section class="py-8">
+        <div class="container mx-auto px-6">
+            <div class="bg-white rounded-lg card-shadow p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">
+                    <i class="fas fa-balance-scale mr-2 text-green-600"></i>
+                    模块1：处分类型统计
+                </h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <div id="penalty-type-chart" style="height: 400px;"></div>
+                    </div>
+                    <div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">处分类型</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">案例数量</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">占比</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="penalty-type-table">
+                                    <!-- 动态生成表格内容 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 模块2：违规类型统计 -->
+    <section class="py-8">
+        <div class="container mx-auto px-6">
+            <div class="bg-white rounded-lg card-shadow p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">
+                    <i class="fas fa-exclamation-triangle mr-2 text-red-600"></i>
+                    模块2：违规类型统计
+                </h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <div id="violation-type-chart" style="height: 400px;"></div>
+                    </div>
+                    <div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">违规类型</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">案例数量</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">占比</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="violation-type-table">
+                                    <!-- 动态生成表格内容 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 模块3：违规类型与处分类型关联分析 -->
+    <section class="py-8">
+        <div class="container mx-auto px-6">
+            <div class="bg-white rounded-lg card-shadow p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">
+                    <i class="fas fa-project-diagram mr-2 text-purple-600"></i>
+                    模块3：违规类型与处分类型关联分析
+                </h2>
+                <div id="correlation-chart" style="height: 500px;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 模块4：财务类违规的行业分布分析 -->
+    <section class="py-8">
+        <div class="container mx-auto px-6">
+            <div class="bg-white rounded-lg card-shadow p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">
+                    <i class="fas fa-industry mr-2 text-indigo-600"></i>
+                    模块4：财务类违规的行业分布分析
+                </h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <div id="industry-chart" style="height: 400px;"></div>
+                    </div>
+                    <div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">所属行业</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">案例数量</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">占比</th>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">排名</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="industry-table">
+                                    <!-- 动态生成表格内容 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 模块5：财务类公开处罚案件的违规行为深度拆解 -->
+    <section class="py-8">
+        <div class="container mx-auto px-6">
+            <div class="bg-white rounded-lg card-shadow p-6 mb-8">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">
+                    <i class="fas fa-search mr-2 text-orange-600"></i>
+                    模块5：财务类公开处罚案件的违规行为深度拆解
+                </h2>
+                
+                <!-- 造假手段统计 -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">造假手段统计</h3>
+                    <div id="fraud-methods-chart" style="height: 400px;"></div>
+                </div>
+
+                <!-- 代表性案件 -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">代表性案件</h3>
+                    <div class="space-y-4" id="representative-cases">
+                        <!-- 动态生成代表性案件卡片 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 数据下载 -->
+    <section class="py-8 bg-gray-100">
+        <div class="container mx-auto px-6">
+            <div class="bg-white rounded-lg card-shadow p-6 text-center">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">数据下载</h3>
+                <p class="text-gray-600 mb-4">下载完整的分析结果数据</p>
+                <div class="space-x-4">
+                    <button onclick="downloadData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                        <i class="fas fa-download mr-2"></i>
+                        下载JSON数据
+                    </button>
+                    <button onclick="viewRawJson()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                        <i class="fas fa-file-code mr-2"></i>
+                        查看分析记录(JSON)
+                    </button>
+                    <a href="upload.html" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300 inline-block">
+                        <i class="fas fa-upload mr-2"></i>
+                        上传新文件
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 历史记录 -->
+    <section class="py-8">
+        <div class="container mx-auto px-6">
+            <div class="bg-white rounded-lg card-shadow p-6">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-history mr-2 text-purple-600"></i>
+                    历史记录（已生成的分析结果）
+                </h3>
+                <p class="text-gray-600 mb-4">每次分析完成后将结果命名为：上传表格名 + 分析时间</p>
+                <div id="history-items" class="divide-y">
+                    <!-- 动态生成历史项 -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2024 行政处罚数据分析系统. 基于Excel文件自动生成.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 加载分析结果数据
+        let analysisData = null;
+        // 汇总页固定字段：公开处罚案件数（来自 2016-2020.json 的 public_cases）
+        let aggregatedPublicCases = null;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAnalysisData();
+            loadHistoryList();
+            preloadAggregatedPublicCases();
+        });
+
+        // 同源或跨端口的后端基址
+        function getApiBase() {
+            return (window.location.port === '8001' ? '' : 'http://localhost:8001');
+        }
+
+        async function loadHistoryList() {
+            const container = document.getElementById('history-items');
+            try {
+                const resp = await fetch(getApiBase() + '/history', { cache: 'no-store', mode: 'cors', credentials: 'omit' });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const list = await resp.json();
+                renderHistoryList(list);
+            } catch (e) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-6">未能加载历史记录，请稍后重试。</div>';
+            }
+        }
+
+        async function preloadAggregatedPublicCases() {
+            try {
+                const resp = await fetch('2016-2020.json?t=' + Date.now(), { cache: 'no-store' });
+                if (!resp.ok) return;
+                const json = await resp.json();
+                aggregatedPublicCases = json?.public_cases ?? null;
+                if (analysisData) { renderSummaryCards(); }
+            } catch (e) {
+                console.warn('预加载汇总 public_cases 失败: ', e);
+            }
+        }
+
+        function renderHistoryList(list) {
+            const container = document.getElementById('history-items');
+            if (!list || list.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-6">暂无历史记录</div>';
+                return;
+            }
+            container.innerHTML = list.map(item => `
+                <div class="py-3 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-file-alt text-blue-600"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">${item.name}</div>
+                            <div class="text-sm text-gray-500">分析时间：${item.timestamp}</div>
+                        </div>
+                    </div>
+                    <div class="space-x-2">
+                        <a href="${item.url}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-1 px-3 rounded">查看JSON</a>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded" onclick="loadAnalysisFromUrl('${item.url}')">载入到报告</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadAnalysisFromUrl(url) {
+            try {
+                const resp = await fetch(url + '?t=' + Date.now(), { cache: 'no-store', mode: 'cors', credentials: 'omit' });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const json = await resp.json();
+                analysisData = json;
+                initializeCharts();
+                alert('已载入所选历史结果到报告页');
+            } catch (e) {
+                console.error('载入历史结果失败: ', e);
+                alert('载入历史结果失败，请稍后重试');
+            }
+        }
+
+        async function loadAnalysisData() {
+            try {
+                const response = await fetch('analysis_results.json?t=' + Date.now(), { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ' ' + response.statusText);
+                }
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    throw new Error('Non-JSON response: ' + contentType);
+                }
+                analysisData = await response.json();
+                initializeCharts();
+            } catch (error) {
+                console.warn('未加载到真实分析数据，使用示例数据。原因：', error);
+                analysisData = getSampleData();
+                initializeCharts();
+            }
+        }
+
+        function viewRawJson() {
+            // 打开已生成的分析记录原始JSON（避免缓存）
+            window.open('analysis_results.json?t=' + Date.now(), '_blank');
+        }
+
+        function initializeCharts() {
+            if (!analysisData) return;
+
+            // 1. 数据概览
+            renderSummaryCards();
+            
+            // 2. 处分类型统计
+            renderPenaltyTypes();
+            
+            // 3. 违规类型统计
+            renderViolationTypes();
+            
+            // 4. 关联分析
+            renderCorrelationChart();
+            
+            // 5. 行业分布
+            renderIndustryDistribution();
+            
+            // 6. 造假手段分析
+            renderFraudMethods();
+            
+            // 7. 代表性案件
+            renderRepresentativeCases();
+        }
+
+        // 数值到颜色的映射（更明显分级）：0=灰色；低→高：绿色、深蓝色、橙色、浅黄色、红色
+        const COLOR_0_GRAY = '#e5e7eb';      // gray-200
+        const COLOR_LOW_GREEN = '#22c55e';   // green-500
+        const COLOR_MED_BLUE = '#1e3a8a';    // blue-900
+        const COLOR_HIGH_ORANGE = '#f59e0b'; // amber-500
+        const COLOR_HIGH_YELLOW = '#fde68a'; // yellow-200
+        const COLOR_MAX_RED = '#ef4444';     // red-500
+        function valueToColor(val) {
+            const v = Number(val) || 0;
+            if (v <= 0) return COLOR_0_GRAY;
+            if (v <= 20) return COLOR_LOW_GREEN;
+            if (v <= 40) return COLOR_MED_BLUE;
+            if (v <= 60) return COLOR_HIGH_ORANGE;
+            if (v <= 80) return COLOR_HIGH_YELLOW;
+            return COLOR_MAX_RED;
+        }
+        function lerpColor(c1, c2, t) {
+            const [r1,g1,b1] = hexToRgb(c1);
+            const [r2,g2,b2] = hexToRgb(c2);
+            const r = Math.round(r1 + (r2 - r1) * t);
+            const g = Math.round(g1 + (g2 - g1) * t);
+            const b = Math.round(b1 + (b2 - b1) * t);
+            return rgbToHex(r,g,b);
+        }
+        function hexToRgb(hex) {
+            const h = hex.replace('#','');
+            const bigint = parseInt(h, 16);
+            return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+        }
+        function rgbToHex(r,g,b) {
+            return '#' + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join('');
+        }
+        // 高对比度调色板（适合色弱/色盲友好）
+        const PALETTE_HIGH_CONTRAST = ["#2563eb", "#16a34a", "#9333ea", "#ef4444", "#f59e0b", "#06b6d4"];
+        const DECILE_COLORS = ["#f5f5f5", "#e5e7eb", "#d1d5db", "#9ca3af", "#6b7280", "#4b5563", "#374151", "#1f2937", "#111827", "#0b0f19"];
+        function computePublicCasesFromSummary(data) {
+  const ac = (data?.data_summary?.after_cleaning ?? data?.after_cleaning);
+  const pf = (data?.data_summary?.public_penalty_filtered ?? data?.public_penalty_filtered);
+  if (typeof ac === 'number' && typeof pf === 'number') {
+    const v = ac - pf;
+    return v >= 0 ? v : 0;
+  }
+  return null;
+}
+        
+        function renderSummaryCards() {
+            const penaltyCounts = analysisData.penalty_types?.penalty_counts || {};
+            const violationCounts = analysisData.violation_types?.violation_counts || {};
+            const totalCases = analysisData.penalty_types?.total_cases || 0;
+            const originalCount = analysisData.data_summary?.original_count ?? analysisData.original_count ?? 0;
+            const publicCases = (computePublicCasesFromSummary(analysisData) ?? aggregatedPublicCases ?? analysisData.public_cases ?? 0);
+            document.getElementById('summary-cards').innerHTML = `
+              <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+                <div class="text-3xl font-bold">${totalCases}</div>
+                <div class="text-blue-100">证监部门（含交易所等）案件数</div>
+              </div>
+              <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+                <div class="text-3xl font-bold">${originalCount}</div>
+                <div class="text-green-100">原始案件数</div>
+              </div>
+              <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+                <div class="text-3xl font-bold">${publicCases}</div>
+                <div class="text-purple-100">公开处罚案件数</div>
+              </div>
+              <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-6 text-white">
+                <div class="text-3xl font-bold">${Array.isArray(analysisData.financial_industry_distribution) ? analysisData.financial_industry_distribution.reduce((s, it) => s + (it.count || 0), 0) : 0}</div>
+                <div class="text-red-100">财务类公开处罚案件数</div>
+              </div>`;
+            }
+
+        function renderPenaltyTypes() {
+            const penaltyData = analysisData.penalty_types?.penalty_counts || {};
+            const chart = echarts.init(document.getElementById('penalty-type-chart'));
+            
+            const data = Object.entries(penaltyData).map(([name, value]) => ({
+                name,
+                value
+            }));
+            
+            const option = {
+                color: PALETTE_HIGH_CONTRAST,
+                title: {
+                    text: '处分类型分布',
+                    left: 'center',
+                    textStyle: { color: '#000' }
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)',
+                    textStyle: { color: '#000' },
+                    backgroundColor: '#fff',
+                    borderColor: '#333'
+                },
+                series: [{
+                    name: '案例数量',
+                    type: 'pie',
+                    radius: '70%',
+                    label: { show: true, color: '#000', fontWeight: 'bold', formatter: '{b}\n{c}（{d}%）' },
+                    labelLine: { lineStyle: { color: '#000' } },
+                    data: data,
+                    emphasis: {
+                        itemStyle: { shadowBlur: 12, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.4)' }
+                    }
+                }]
+            };
+            
+            chart.setOption(option);
+
+            // 渲染表格
+            const tableContainer = document.getElementById('penalty-type-table');
+            const total = Object.values(penaltyData).reduce((sum, val) => sum + val, 0);
+            
+            tableContainer.innerHTML = Object.entries(penaltyData)
+                .sort(([,a], [,b]) => b - a)
+                .map(([type, count]) => `
+                    <tr class="table-hover">
+                        <td class="px-4 py-2 text-sm">${type}</td>
+                        <td class="px-4 py-2 text-sm">${count}</td>
+                        <td class="px-4 py-2 text-sm">${((count/total)*100).toFixed(1)}%</td>
+                    </tr>
+                `).join('');
+        }
+
+        function renderViolationTypes() {
+            const violationData = analysisData.violation_types?.violation_counts || {};
+            const publicViolationData = analysisData.public_violation_counts || {};
+            const chart = echarts.init(document.getElementById('violation-type-chart'));
+            
+            const data = Object.entries(violationData).map(([name, value]) => ({ name, value }));
+            const hasPublic = Object.keys(publicViolationData).length > 0;
+            const dataPublic = hasPublic ? Object.entries(publicViolationData).map(([name, value]) => ({ name, value })) : [];
+            
+            const option = {
+                color: PALETTE_HIGH_CONTRAST,
+                title: hasPublic ? [
+                    { text: '违规类型分布', left: 'center', top: 0, textStyle: { color: '#000' } },
+                    { text: '总体违规', left: '25%', top: '6%', textStyle: { color: '#374151', fontSize: 12 } },
+                    { text: '公开处罚', left: '75%', top: '6%', textStyle: { color: '#374151', fontSize: 12 } }
+                ] : { text: '违规类型分布', left: 'center', textStyle: { color: '#000' } },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)',
+                    textStyle: { color: '#000' },
+                    backgroundColor: '#fff',
+                    borderColor: '#333'
+                },
+                series: hasPublic ? [
+                    {
+                        name: '总体违规',
+                        type: 'pie',
+                        radius: '60%',
+                        center: ['25%', '55%'],
+                        label: { show: true, color: '#000', fontWeight: 'bold', formatter: '{b}\n{c}（{d}%）' },
+                        labelLine: { lineStyle: { color: '#000' } },
+                        data: data,
+                        emphasis: {
+                            itemStyle: { shadowBlur: 12, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.4)' }
+                        }
+                    },
+                    {
+                        name: '公开处罚',
+                        type: 'pie',
+                        radius: '60%',
+                        center: ['75%', '55%'],
+                        label: { show: true, color: '#000', fontWeight: 'bold', formatter: '{b}\n{c}（{d}%）' },
+                        label: { show: true, color: '#000', position: 'inside', formatter: function(p){ return p.name + '\n' + (p.percent).toFixed(2) + '%'; } },
+                        labelLine: { lineStyle: { color: '#000' } },
+                        data: dataPublic,
+                        emphasis: {
+                            itemStyle: { shadowBlur: 12, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.4)' }
+                        }
+                    }
+                ] : [{
+                    name: '案例数量',
+                    type: 'pie',
+                    radius: '70%',
+                    label: { show: true, color: '#000', fontWeight: 'bold', formatter: '{b}\n{c}（{d}%）' },
+                    label: { show: true, color: '#000', position: 'inside', formatter: function(p){ return (p.percent).toFixed(2) + '%'; } },
+                    labelLine: { lineStyle: { color: '#000' } },
+                    data: data,
+                    emphasis: {
+                        itemStyle: { shadowBlur: 12, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.4)' }
+                    }
+                }]
+            };
+            
+            chart.setOption(option);
+
+            // 渲染表格（保持原表格为总体违规类型）
+            const tableContainer = document.getElementById('violation-type-table');
+            const total = Object.values(violationData).reduce((sum, val) => sum + val, 0);
+            tableContainer.innerHTML = Object.entries(violationData)
+                .sort(([,a], [,b]) => b - a)
+                .map(([type, count]) => `
+                    <tr class="table-hover">
+                        <td class="px-4 py-2 text-sm">${type}</td>
+                        <td class="px-4 py-2 text-sm">${count}</td>
+                        <td class="px-4 py-2 text-sm">${((count/total)*100).toFixed(1)}%</td>
+                    </tr>
+                `).join('');
+        }
+
+        function renderCorrelationChart() {
+            const correlationData = analysisData.violation_penalty_correlation || {};
+                
+            if (Object.keys(correlationData).length === 0) {
+                document.getElementById('correlation-chart').innerHTML = '<div class="text-center text-gray-500 py-8">暂无关联分析数据</div>';
+                return;
+            }
+        
+            const chart = echarts.init(document.getElementById('correlation-chart'));
+                        
+            // 准备数据
+            const violations = Object.keys(correlationData);
+            const penalties = [...new Set(Object.values(correlationData).flatMap(obj => Object.keys(obj)))];
+                
+            const data = [];
+            violations.forEach((violation, i) => {
+                penalties.forEach((penalty, j) => {
+                    const value = correlationData[violation][penalty]?.percentage || 0;
+                    data.push([j, i, value]);
+                });
+            });
+        
+            const option = {
+                title: { text: '违规类型与处分类型关联热力图', left: 'center' },
+                tooltip: {
+                    position: 'top',
+                    formatter: function(params) {
+                        return `${penalties[params.data[0]]} + ${violations[params.data[1]]}<br/>占比: ${params.data[2].toFixed(2)}%`;
+                    },
+                    textStyle: { color: '#000' },
+                    backgroundColor: '#fff',
+                    borderColor: '#333'
+                },
+                grid: { height: '50%', top: '10%' },
+                xAxis: {
+                    type: 'category',
+                    data: penalties,
+                    axisLabel: { color: '#000', interval: 0, rotate: 45, hideOverlap: false },
+                    axisLine: { lineStyle: { color: '#374151' } },
+                    splitArea: { show: true }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: violations,
+                    axisLabel: { color: '#000' },
+                    axisLine: { lineStyle: { color: '#374151' } },
+                    splitArea: { show: true }
+                },
+                visualMap: {
+                    min: 0,
+                    max: 100,
+                    orient: 'horizontal',
+                    left: 'center',
+                    bottom: '15%',
+                    calculable: true,
+                    inRange: {
+                        // 0 为灰色，随后由浅黄到橙色的连续渐变
+                        color: ['#e5e7eb', '#fff7cc', '#fde68a', '#f59e0b', '#f97316', '#ea580c']
+                    }
+                },
+                series: [{
+                    name: '关联占比',
+                    type: 'heatmap',
+                    data: data,
+                    label: { show: true, color: '#000', formatter: p => (Number(p.data[2]).toFixed(2) + '%') },
+                    itemStyle: { borderColor: '#ffffff', borderWidth: 1 },
+                    emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                }]
+            };
+                        
+            chart.setOption(option);
+        }
+
+        function renderIndustryDistribution() {
+            // 兼容实际输出与示例数据结构
+            const industryData = (analysisData.financial_industry_distribution && Array.isArray(analysisData.financial_industry_distribution))
+                ? analysisData.financial_industry_distribution
+                : (analysisData.financial_violation_by_industry?.industry_stats || []);
+            
+            if (industryData.length === 0) {
+                document.getElementById('industry-chart').innerHTML = '<div class="text-center text-gray-500 py-8">暂无行业分布数据</div>';
+                return;
+            }
+
+            const chart = echarts.init(document.getElementById('industry-chart'));
+            
+            const option = {
+                color: PALETTE_HIGH_CONTRAST,
+                title: {
+                    text: '财务类违规行业分布',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: industryData.map(item => item.industry),
+                    axisLabel: { rotate: 45, color: '#000' },
+                    axisLine: { lineStyle: { color: '#374151' } },
+                    splitLine: { show: true, lineStyle: { color: '#e5e7eb' } }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { color: '#000' },
+                    axisLine: { lineStyle: { color: '#374151' } },
+                    splitLine: { show: true, lineStyle: { color: '#e5e7eb' } }
+                },
+                series: [{
+                    name: '案例数量',
+                    type: 'bar',
+                    data: industryData.map((item, idx) => ({ value: item.count, itemStyle: { color: PALETTE_HIGH_CONTRAST[idx % PALETTE_HIGH_CONTRAST.length] } })),
+                    itemStyle: {
+                        borderColor: '#111',
+                        borderWidth: 0
+                    },
+                    label: { show: true, position: 'top', color: '#000', formatter: function(p){ return p.value; } }
+                }]
+            };
+            
+            chart.setOption(option);
+
+            // 渲染表格
+            const tableContainer = document.getElementById('industry-table');
+            
+            tableContainer.innerHTML = industryData.map(item => `
+                <tr class="table-hover">
+                    <td class="px-4 py-2 text-sm">${item.industry}</td>
+                    <td class="px-4 py-2 text-sm">${item.count}</td>
+                    <td class="px-4 py-2 text-sm">${item.percentage.toFixed ? item.percentage.toFixed(1) + '%' : (Number(item.percentage || 0)).toFixed(1) + '%'}</td>
+                    <td class="px-4 py-2 text-sm">${item.rank}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderFraudMethods() {
+            const fraudData = analysisData.financial_violation_details?.fraud_method_counts || {};
+            
+            if (Object.keys(fraudData).length === 0) {
+                document.getElementById('fraud-methods-chart').innerHTML = '<div class="text-center text-gray-500 py-8">暂无造假手段数据</div>';
+                return;
+            }
+
+            const chart = echarts.init(document.getElementById('fraud-methods-chart'));
+            
+            const data = Object.entries(fraudData)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 15)
+                .map(([name, value]) => ({
+                    name,
+                    value
+                }));
+            
+            const option = {
+                color: PALETTE_HIGH_CONTRAST,
+                title: {
+                    text: '造假手段频次统计',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)'
+                },
+                series: [{
+                    name: '出现频次',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    label: { show: true, color: '#000', position: 'inside', formatter: function(p){ return p.name + '\n' + (p.percent).toFixed(2) + '%'; } },
+                    labelLine: { lineStyle: { color: '#000' } },
+                    data: data,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            };
+            
+            chart.setOption(option);
+        }
+
+        function renderRepresentativeCases() {
+            const cases = analysisData.financial_violation_details?.representative_cases || [];
+            
+            const container = document.getElementById('representative-cases');
+            
+            if (cases.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-4">暂无代表性案件数据</div>';
+                return;
+            }
+
+            container.innerHTML = cases.map(case_ => `
+                <div class="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-r-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="text-lg font-semibold text-gray-800">${case_.fraud_method}</h4>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${case_.count}次出现</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div><strong>违规主体:</strong> ${case_.subject}</div>
+                        <div><strong>罚款金额:</strong> ${case_.penalty_amount}</div>
+                        <div><strong>案号:</strong> ${case_.case_number}</div>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-700">
+                        <strong>违规行为:</strong> ${case_.violation_behavior}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function downloadData() {
+            if (!analysisData) {
+                alert('暂无数据可下载');
+                return;
+            }
+
+            const dataStr = JSON.stringify(analysisData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = '行政处罚分析结果.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        // 示例数据（当无法加载真实数据时使用）
+        function getSampleData() {
+            return {
+                "data_summary": {
+                    "original_count": 1000,
+                    "empty_rows_removed": 50,
+                    "duplicate_rows_removed": 30,
+                    "handler_filtered": 100,
+                    "public_penalty_filtered": 200,
+                    "after_cleaning": 620
+                },
+                "penalty_types": {
+                    "total_cases": 620,
+                    "penalty_counts": {
+                        "公开处罚": 300,
+                        "公开谴责": 150,
+                        "公开认定": 80,
+                        "警告": 90
+                    }
+                },
+                "violation_types": {
+                    "violation_counts": {
+                        "财务类违规": 200,
+                        "信息披露违规": 180,
+                        "公司治理违规": 120,
+                        "交易违规": 80,
+                        "其他违规": 40
+                    }
+                },
+                "violation_penalty_correlation": {
+                    "财务类违规": {
+                        "公开处罚": {"count": 120, "percentage": 60},
+                        "公开谴责": {"count": 60, "percentage": 30},
+                        "警告": {"count": 20, "percentage": 10}
+                    },
+                    "信息披露违规": {
+                        "公开处罚": {"count": 90, "percentage": 50},
+                        "公开谴责": {"count": 72, "percentage": 40},
+                        "警告": {"count": 18, "percentage": 10}
+                    }
+                },
+                "financial_violation_by_industry": {
+                    "total_financial_cases": 200,
+                    "industry_stats": [
+                        {"industry": "制造业", "count": 60, "percentage": 30, "rank": 1},
+                        {"industry": "信息技术", "count": 40, "percentage": 20, "rank": 2},
+                        {"industry": "房地产", "count": 30, "percentage": 15, "rank": 3},
+                        {"industry": "金融业", "count": 25, "percentage": 12.5, "rank": 4},
+                        {"industry": "其他", "count": 45, "percentage": 22.5, "rank": 5}
+                    ]
+                },
+                "financial_violation_details": {
+                    "fraud_method_counts": {
+                        "虚增收入": 50,
+                        "虚减成本": 40,
+                        "虚增利润": 35,
+                        "虚构交易": 30,
+                        "虚假记载": 25,
+                        "重大遗漏": 20
+                    },
+                    "representative_cases": [
+                        {
+                            "fraud_method": "虚增收入",
+                            "subject": "某某公司",
+                            "violation_behavior": "通过虚构销售合同虚增收入",
+                            "penalty_amount": "100万元",
+                            "case_number": "证监罚字[2023]1号",
+                            "count": 50
+                        }
+                    ]
+                }
+            };
+        }
+
+        // 响应式图表
+        window.addEventListener('resize', function() {
+            const charts = [
+                echarts.getInstanceByDom(document.getElementById('penalty-type-chart')),
+                echarts.getInstanceByDom(document.getElementById('violation-type-chart')),
+                echarts.getInstanceByDom(document.getElementById('correlation-chart')),
+                echarts.getInstanceByDom(document.getElementById('industry-chart')),
+                echarts.getInstanceByDom(document.getElementById('fraud-methods-chart'))
+            ];
+            
+            charts.forEach(chart => {
+                if (chart) chart.resize();
+            });
+        });
+    </script>
+</body>
+</html>

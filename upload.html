@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行政处罚数据分析 - 文件上传</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            transition: all 0.3s ease;
+        }
+        .upload-area.dragover {
+            border-color: #667eea;
+            background-color: #f7fafc;
+        }
+        .file-item {
+            transition: all 0.3s ease;
+        }
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 头部 -->
+    <header class="gradient-bg text-white py-6">
+        <div class="container mx-auto px-6">
+            <h1 class="text-3xl font-bold mb-2">
+                <i class="fas fa-cloud-upload-alt mr-3"></i>
+                行政处罚数据分析
+            </h1>
+            <p class="text-lg opacity-90">上传Excel文件进行智能分析</p>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- 上传区域 -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">
+                <i class="fas fa-file-excel mr-2 text-green-600"></i>
+                上传Excel文件
+            </h2>
+            
+            <!-- 拖拽上传区域 -->
+            <div id="upload-area" class="upload-area rounded-lg p-12 text-center mb-6">
+                <div class="mb-4">
+                    <i class="fas fa-file-excel text-6xl text-green-500 mb-4"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">拖拽文件到此处或点击上传</h3>
+                <p class="text-gray-500 mb-4">支持 .xlsx, .xls 格式的Excel文件</p>
+                <button id="browse-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                    <i class="fas fa-folder-open mr-2"></i>
+                    选择文件
+                </button>
+                <input type="file" id="file-input" accept=".xlsx,.xls" class="hidden">
+            </div>
+
+            <!-- 上传提示 -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-sm font-medium text-blue-800">文件要求</h4>
+                        <div class="mt-1 text-sm text-blue-700">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>文件格式：Excel (.xlsx, .xls)</li>
+                                <li>数据结构：单工作表，每行一个案件</li>
+                                <li>必需字段：违规类型、处分类型、所属行业、处理人</li>
+                                <li>建议字段：处罚案号、处罚金额、违规行为、处分措施</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文件列表 -->
+        <div id="file-list" class="bg-white rounded-lg shadow-lg p-6 mb-8 hidden">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-list mr-2 text-blue-600"></i>
+                上传的文件
+            </h3>
+            <div id="file-items" class="space-y-3">
+                <!-- 动态生成文件项 -->
+            </div>
+        </div>
+
+        <!-- 分析进度 -->
+        <div id="analysis-progress" class="bg-white rounded-lg shadow-lg p-6 mb-8 hidden">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-cog fa-spin mr-2 text-purple-600"></i>
+                分析进度
+            </h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">数据读取与验证</span>
+                    <span id="step1-status" class="text-sm text-gray-500">等待中</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="step1-progress" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">数据清洗</span>
+                    <span id="step2-status" class="text-sm text-gray-500">等待中</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="step2-progress" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">统计分析</span>
+                    <span id="step3-status" class="text-sm text-gray-500">等待中</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="step3-progress" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">生成报告</span>
+                    <span id="step4-status" class="text-sm text-gray-500">等待中</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="step4-progress" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分析结果 -->
+        <div id="analysis-results" class="bg-white rounded-lg shadow-lg p-6 mb-8 hidden">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">
+                <i class="fas fa-chart-bar mr-2 text-green-600"></i>
+                分析结果
+            </h3>
+            <div id="results-content" class="space-y-4">
+                <!-- 动态生成结果内容 -->
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="text-center space-y-4">
+            <button id="start-analysis-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300 hidden">
+                <i class="fas fa-play mr-2"></i>
+                开始分析
+            </button>
+            
+            <div id="result-buttons" class="space-x-4 hidden">
+                <button onclick="viewReport()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300">
+                    <i class="fas fa-eye mr-2"></i>
+                    查看完整报告
+                </button>
+                <button onclick="downloadResults()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300">
+                    <i class="fas fa-download mr-2"></i>
+                    下载分析结果
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2024 行政处罚数据分析系统. 智能分析，精准洞察.</p>
+        </div>
+    </footer>
+
+    <script>
+        let uploadedFile = null;
+        let analysisResults = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeUpload();
+        });
+
+        function initializeUpload() {
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const browseBtn = document.getElementById('browse-btn');
+
+            // 点击上传
+            browseBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            // 拖拽上传
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+        }
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            const file = files[0];
+            
+            // 验证文件类型
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                showAlert('请上传Excel文件(.xlsx, .xls)', 'error');
+                return;
+            }
+
+            uploadedFile = file;
+            displayFile(file);
+            showStartButton();
+        }
+
+        function displayFile(file) {
+            const fileList = document.getElementById('file-list');
+            const fileItems = document.getElementById('file-items');
+
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            
+            fileItems.innerHTML = `
+                <div class="file-item bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-excel text-green-500 text-2xl mr-4"></i>
+                        <div>
+                            <div class="font-semibold text-gray-800">${file.name}</div>
+                            <div class="text-sm text-gray-500">${fileSize} MB</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">已上传</span>
+                        <button onclick="removeFile()" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            fileList.classList.remove('hidden');
+        }
+
+        function removeFile() {
+            uploadedFile = null;
+            document.getElementById('file-list').classList.add('hidden');
+            document.getElementById('start-analysis-btn').classList.add('hidden');
+            document.getElementById('file-input').value = '';
+        }
+
+        function showStartButton() {
+            document.getElementById('start-analysis-btn').classList.remove('hidden');
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'error' ? 'bg-red-500 text-white' : 
+                type === 'success' ? 'bg-green-500 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            alertDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        type === 'error' ? 'fa-exclamation-circle' : 
+                        type === 'success' ? 'fa-check-circle' : 
+                        'fa-info-circle'
+                    } mr-2"></i>
+                    ${message}
+                </div>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // 进度更新（补充缺失方法）
+        function updateProgress(step, status, percentage) {
+            const statusElement = document.getElementById(`${step}-status`);
+            const progressElement = document.getElementById(`${step}-progress`);
+            if (statusElement) {
+                statusElement.textContent = status;
+                statusElement.className = 'text-sm ' + (status === '完成' ? 'text-green-600 font-medium' : status === '进行中' ? 'text-blue-600 font-medium' : 'text-gray-500');
+            }
+            if (progressElement) {
+                progressElement.style.width = `${percentage}%`;
+            }
+        }
+
+        // 开始分析
+        document.getElementById('start-analysis-btn').addEventListener('click', function() {
+            if (!uploadedFile) {
+                showAlert('请先上传文件', 'error');
+                return;
+            }
+
+            startAnalysis();
+        });
+
+        function startAnalysis() {
+            const progressDiv = document.getElementById('analysis-progress');
+            progressDiv.classList.remove('hidden');
+
+            if (!uploadedFile) {
+                showAlert('请先上传文件', 'error');
+                return;
+            }
+
+            // 禁用按钮，避免重复触发
+            const startBtn = document.getElementById('start-analysis-btn');
+            startBtn.disabled = true;
+            startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            // 立即给出进度反馈
+            updateProgress('step1', '进行中', 15);
+            updateProgress('step2', '等待中', 0);
+            updateProgress('step3', '等待中', 0);
+            updateProgress('step4', '等待中', 0);
+
+            // 发起后端分析
+            uploadAndAnalyze(uploadedFile)
+                .then((resp) => {
+                    updateProgress('step1', '完成', 100);
+                    updateProgress('step2', '完成', 100);
+                    updateProgress('step3', '完成', 100);
+                    updateProgress('step4', '完成', 100);
+                    showResults(resp && resp.summary);
+                    document.getElementById('result-buttons').classList.remove('hidden');
+                    showAlert('分析完成！', 'success');
+                })
+                .catch((err) => {
+                    console.error(err);
+                    showAlert('分析失败，请检查文件或稍后重试', 'error');
+                })
+                .finally(() => {
+                    // 恢复按钮可用状态
+                    startBtn.disabled = false;
+                    startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                });
+        }
+
+        async function uploadAndAnalyze(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // 统一指向后端服务：若当前端口不是8001，则使用 http://localhost:8001
+            const apiBase = (window.location.port === '8001' ? '' : 'http://localhost:8001');
+            const uploadUrl = `${apiBase}/upload`;
+
+            try {
+                const resp = await fetch(uploadUrl, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                if (!resp.ok) {
+                    const errText = await resp.text();
+                    throw new Error(`上传或分析失败(${resp.status}): ${errText}`);
+                }
+                return await resp.json();
+            } catch (e) {
+                // 连接重置或网络错误的明确提示
+                console.error('上传请求错误: ', e);
+                throw e;
+            }
+        }
+
+        function showResults(summary) {
+            const resultsDiv = document.getElementById('analysis-results');
+            const resultsContent = document.getElementById('results-content');
+            const s = summary || {};
+            const original = s.original_count ?? 0;
+            const cleaned = s.after_cleaning ?? 0;
+            const removedEmpty = s.empty_rows_removed ?? 0;
+            const removedDuplicate = s.duplicate_rows_removed ?? 0;
+            const removedHandler = s.handler_filtered ?? 0;
+            const removedNonPublic = s.public_penalty_filtered ?? 0;
+            const removedEmptyDuplicate = removedEmpty + removedDuplicate;
+
+            resultsContent.innerHTML = `
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-800 mb-2">数据处理摘要</h4>
+                    <div class="text-sm text-gray-700 space-y-1">
+                        <p>一共有案例 <span class="font-semibold text-blue-600">${original}</span> 例</p>
+                        <p>有效案件共 <span class="font-semibold text-green-600">${cleaned}</span> 例</p>
+                        <p>剔除空行重复行 <span class="font-semibold text-purple-600">${removedEmptyDuplicate}</span> 例</p>
+                        <p>剔除处理人 <span class="font-semibold text-red-600">${removedHandler}</span> 例</p>
+                        <p>剔除非公开处罚案件 <span class="font-semibold text-orange-600">${removedNonPublic}</span> 例</p>
+                    </div>
+                </div>
+            `;
+            resultsDiv.classList.remove('hidden');
+        }
+
+        function viewReport() {
+            // 加上时间戳避免浏览器缓存
+            window.open('index.html?t=' + Date.now(), '_blank');
+        }
+
+        function downloadResults() {
+            // 创建下载链接
+            const link = document.createElement('a');
+            link.href = 'analysis_results.json';
+            link.download = '行政处罚分析结果.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

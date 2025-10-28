@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>多数据预览 | 行政处罚数据分析报告</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .tab-btn { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; border-radius: 0.375rem; border: 1px solid #d1d5db; cursor: pointer; }
+    .tab-active { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
+    .tab-inactive { background-color: #ffffff; color: #374151; border-color: #d1d5db; }
+    .tab-inactive:hover { background-color: #f9fafb; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- 头部 -->
+  <header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-6">
+    <div class="container mx-auto px-6">
+      <h1 class="text-3xl font-bold mb-1">
+        <i class="fas fa-gavel mr-3"></i>多数据预览 | 行政处罚数据分析报告
+      </h1>
+      <p class="opacity-90">点击下方选项卡切换不同年度或汇总数据</p>
+    </div>
+  </header>
+
+  <!-- 选项卡 -->
+  <section class="py-4 bg-white border-b">
+    <div class="container mx-auto px-6">
+      <div id="tabs" class="flex flex-wrap gap-2">
+        <!-- 汇总与年度数据 -->
+        <button data-file="2016-2025.json" class="tab-btn tab-active">2016-2025 总汇</button>
+        <button data-file="2016-2020.json" class="tab-btn tab-inactive">2016-2020 汇总</button>
+        <button data-file="2021-2025.json" class="tab-btn tab-inactive">2021-2025 汇总</button>
+        <button data-file="2016.json" class="tab-btn tab-inactive">2016</button>
+        <button data-file="2017.json" class="tab-btn tab-inactive">2017</button>
+        <button data-file="2018.json" class="tab-btn tab-inactive">2018</button>
+        <button data-file="2019.json" class="tab-btn tab-inactive">2019</button>
+        <button data-file="2020.json" class="tab-btn tab-inactive">2020</button>
+        <button data-file="2021.json" class="tab-btn tab-inactive">2021</button>
+        <button data-file="2022.json" class="tab-btn tab-inactive">2022</button>
+        <button data-file="2023.json" class="tab-btn tab-inactive">2023</button>
+        <button data-file="2024.json" class="tab-btn tab-inactive">2024</button>
+        <button data-file="2025.json" class="tab-btn tab-inactive">2025</button>
+      </div>
+      <div class="mt-3 text-sm text-gray-600">当前数据文件：<span id="current-file" class="font-mono">2016-2025.json</span></div>
+    </div>
+  </section>
+
+  <!-- 数据概览 -->
+  <section class="py-8">
+    <div class="container mx-auto px-6">
+      <div class="bg-white rounded-lg card-shadow p-6">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">
+          <i class="fas fa-chart-pie mr-2 text-blue-600"></i>数据概览
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6" id="summary-cards"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 模块1：处分类型统计 -->
+  <section class="py-8">
+    <div class="container mx-auto px-6">
+      <div class="bg-white rounded-lg card-shadow p-6">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">
+          <i class="fas fa-balance-scale mr-2 text-green-600"></i>模块1：处分类型统计
+        </h2>
+        <div id="penalty-type-chart" style="height: 420px;"></div>
+        <div class="overflow-x-auto mt-6">
+          <table class="min-w-full bg-white">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">处分类型</th>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">案例数量</th>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">占比</th>
+              </tr>
+            </thead>
+            <tbody id="penalty-type-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 模块2：违规类型统计（含公开处罚） -->
+  <section class="py-8">
+    <div class="container mx-auto px-6">
+      <div class="bg-white rounded-lg card-shadow p-6">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">
+          <i class="fas fa-exclamation-triangle mr-2 text-red-600"></i>模块2：违规类型统计
+        </h2>
+        <div id="violation-type-chart" style="height: 420px;"></div>
+        <div class="overflow-x-auto mt-6">
+          <table class="min-w-full bg-white">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">违规类型</th>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">案例数量</th>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">占比</th>
+              </tr>
+            </thead>
+            <tbody id="violation-type-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 模块3：违规类型与处分类型关联分析（热力图） -->
+  <section class="py-8">
+    <div class="container mx-auto px-6">
+      <div class="bg-white rounded-lg card-shadow p-6">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">
+          <i class="fas fa-project-diagram mr-2 text-purple-600"></i>模块3：违规类型与处分类型关联分析
+        </h2>
+        <div id="correlation-chart" style="height: 520px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 模块4：财务类违规的行业分布分析 -->
+  <section class="py-8">
+    <div class="container mx-auto px-6">
+      <div class="bg-white rounded-lg card-shadow p-6">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">
+          <i class="fas fa-industry mr-2 text-indigo-600"></i>模块4：财务类违规的行业分布分析
+        </h2>
+        <div id="industry-chart" style="height: 420px;"></div>
+        <div class="overflow-x-auto mt-6">
+          <table class="min-w-full bg-white">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">所属行业</th>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">案例数量</th>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">占比</th>
+                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">排名</th>
+              </tr>
+            </thead>
+            <tbody id="industry-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 模块5：财务类公开处罚案件的违规行为深度拆解 -->
+  <section class="py-8">
+    <div class="container mx-auto px-6">
+      <div class="bg-white rounded-lg card-shadow p-6">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">
+          <i class="fas fa-search mr-2 text-orange-600"></i>模块5：财务类公开处罚案件的违规行为深度拆解
+        </h2>
+        <div id="fraud-methods-chart" style="height: 420px;"></div>
+        <h3 class="text-xl font-semibold mt-6 mb-3 text-gray-700">代表性案件</h3>
+        <div id="representative-cases" class="space-y-4"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 操作区：下载与查看当前JSON -->
+  <section class="py-8 bg-gray-100">
+    <div class="container mx-auto px-6">
+      <div class="bg-white rounded-lg card-shadow p-6 text-center">
+        <h3 class="text-xl font-semibold mb-4 text-gray-800">数据操作</h3>
+        <p class="text-gray-600 mb-4">针对当前选中的数据文件</p>
+        <div class="space-x-4">
+          <button onclick="downloadCurrentJson()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">
+            <i class="fas fa-download mr-2"></i>下载当前JSON
+          </button>
+          <button onclick="viewCurrentJson()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">
+            <i class="fas fa-file-code mr-2"></i>查看当前JSON
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-gray-800 text-white py-6">
+    <div class="container mx-auto px-6 text-center">
+      <p>&copy; 2025 行政处罚数据分析系统. 多数据预览页面.</p>
+    </div>
+  </footer>
+
+  <script>
+    // 当前数据
+    let analysisData = null;
+    let currentFile = '2016-2025.json';
+
+    const PALETTE = ['#0072B2','#D55E00','#009E73','#CC79A7','#F0E442','#56B4E9','#E69F00','#000000','#7F7F7F','#0099CC'];
+
+    // 统一的tooltip样式（黑字白底）
+    const TOOLTIP_COMMON = {
+      trigger: 'item',
+      backgroundColor: '#fff',
+      borderColor: '#e5e7eb',
+      borderWidth: 1,
+      textStyle: { color: '#000' }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupTabs();
+      loadData(currentFile);
+    });
+
+    function setupTabs() {
+      const tabs = document.getElementById('tabs');
+      tabs.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-file]');
+        if (!btn) return;
+        const file = btn.getAttribute('data-file');
+        currentFile = file;
+        document.getElementById('current-file').textContent = file;
+        [...tabs.querySelectorAll('button')].forEach(b => {
+          b.classList.remove('tab-active');
+          b.classList.add('tab-inactive');
+        });
+        btn.classList.add('tab-active');
+        btn.classList.remove('tab-inactive');
+        loadData(file);
+      });
+    }
+
+    async function loadData(file) {
+      try {
+        const resp = await fetch(file + '?t=' + Date.now(), { cache: 'no-store' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        analysisData = await resp.json();
+        initializeCharts();
+      } catch (e) {
+        console.error('加载数据失败:', e);
+        alert('加载数据失败: ' + e.message);
+      }
+    }
+
+    function downloadCurrentJson() {
+      const a = document.createElement('a');
+      a.href = currentFile + '?t=' + Date.now();
+      a.download = currentFile;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+    function viewCurrentJson() {
+      window.open(currentFile + '?t=' + Date.now(), '_blank');
+    }
+
+    function initializeCharts() {
+      if (!analysisData) return;
+      renderSummaryCards();
+      renderPenaltyTypes();
+      renderViolationTypes();
+      renderCorrelationChart();
+      renderIndustryDistribution();
+      renderFraudMethods();
+      renderRepresentativeCases();
+    }
+
+    function sumValues(obj) { return Object.values(obj || {}).reduce((s, v) => s + (v || 0), 0); }
+    function pct(n, total) { return total ? ((n / total) * 100) : 0; }
+    function computePublicCasesFromSummary(data) {
+      const ac = (data?.data_summary?.after_cleaning ?? data?.after_cleaning);
+      const pf = (data?.data_summary?.public_penalty_filtered ?? data?.public_penalty_filtered);
+      if (typeof ac === 'number' && typeof pf === 'number') {
+        const v = ac - pf;
+        return v >= 0 ? v : 0;
+      }
+      return data?.penalty_types?.public_cases ?? data?.public_cases ?? null;
+    }
+
+    function renderSummaryCards() {
+      const penaltyCounts = analysisData?.penalty_types?.penalty_counts || {};
+      const totalCases = analysisData?.penalty_types?.total_cases || sumValues(penaltyCounts) || 0;
+      const originalCount = analysisData?.data_summary?.original_count ?? analysisData?.original_count ?? 0;
+      const publicCases = (computePublicCasesFromSummary(analysisData) ?? 0);
+      const finDist = Array.isArray(analysisData?.financial_industry_distribution) ? analysisData.financial_industry_distribution : [];
+      const financialCases = finDist.reduce((s, it) => s + (it.count || 0), 0);
+      document.getElementById('summary-cards').innerHTML = `
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+          <div class="text-3xl font-bold">${totalCases}</div>
+          <div class="text-blue-100">证监部门（含交易所等）案件数</div>
+        </div>
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+          <div class="text-3xl font-bold">${originalCount}</div>
+          <div class="text-green-100">原始案件数</div>
+        </div>
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+          <div class="text-3xl font-bold">${publicCases}</div>
+          <div class="text-purple-100">公开处罚案件数</div>
+        </div>
+        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-6 text-white">
+          <div class="text-3xl font-bold">${financialCases}</div>
+          <div class="text-red-100">财务类公开处罚案件数</div>
+        </div>`;
+    }
+
+    function renderPenaltyTypes() {
+      const penaltyData = analysisData?.penalty_types?.penalty_counts || {};
+      const total = sumValues(penaltyData);
+      const data = Object.entries(penaltyData).map(([name, value]) => ({ name, value }));
+      const chart = echarts.init(document.getElementById('penalty-type-chart'));
+      const option = {
+        color: PALETTE,
+        title: { text: '处分类型分布', left: 'center', textStyle: { color: '#000' } },
+        tooltip: TOOLTIP_COMMON,
+        series: [{
+          type: 'pie', radius: ['40%', '70%'],
+          label: { show: true, color: '#000', formatter: p => `${p.name}\n${p.value}（${Math.round(pct(p.value, total))}%）` },
+          labelLine: { length: 15, length2: 10 },
+          data
+        }]
+      };
+      chart.setOption(option);
+      // 表格
+      const tbody = document.getElementById('penalty-type-table');
+      tbody.innerHTML = Object.entries(penaltyData).map(([k,v]) => (
+        `<tr class="border-b"><td class="px-4 py-2 text-sm text-gray-700">${k}</td><td class="px-4 py-2 text-sm text-gray-700">${v}</td><td class="px-4 py-2 text-sm text-gray-700">${(pct(v,total)).toFixed(2)}%</td></tr>`
+      )).join('');
+    }
+
+    function renderViolationTypes() {
+      const overall = analysisData?.violation_types?.violation_counts || {};
+      const publicData = analysisData?.public_violation_counts || analysisData?.violation_types?.public_violation_counts || null;
+      const totalOverall = sumValues(overall);
+      const chart = echarts.init(document.getElementById('violation-type-chart'));
+      const series = [];
+      const titles = [];
+      const centers = publicData ? [['25%','55%'], ['75%','55%']] : [['50%','55%']];
+      const radii = publicData ? [['40%','68%'], ['40%','68%']] : [['40%','68%']];
+      const dataOverall = Object.entries(overall).map(([n,v]) => ({ name: n, value: v }));
+      series.push({ type: 'pie', center: centers[0], radius: radii[0],
+        label: { show: true, color: '#000', position: 'inside', formatter: function(p){ return p.name + '\n' + (p.percent).toFixed(2) + '%'; } },
+        data: dataOverall });
+      titles.push({ text: '总体违规', left: publicData ? '25%' : '50%', top: 10, textAlign: 'center', textStyle: { color: '#000' } });
+      if (publicData) {
+        const dataPub = Object.entries(publicData).map(([n,v]) => ({ name: n, value: v }));
+        series.push({ type: 'pie', center: centers[1], radius: radii[1],
+          label: { show: true, color: '#000', position: 'inside', formatter: function(p){ return p.name + '\n' + (p.percent).toFixed(2) + '%'; } },
+          data: dataPub });
+        titles.push({ text: '公开处罚', left: '75%', top: 10, textAlign: 'center', textStyle: { color: '#000' } });
+      }
+      chart.setOption({ color: PALETTE, tooltip: TOOLTIP_COMMON, title: titles, series });
+      // 表格（显示总体违规）
+      const tbody = document.getElementById('violation-type-table');
+      tbody.innerHTML = Object.entries(overall).map(([k,v]) => (
+        `<tr class="border-b"><td class="px-4 py-2 text-sm text-gray-700">${k}</td><td class="px-4 py-2 text-sm text-gray-700">${v}</td><td class="px-4 py-2 text-sm text-gray-700">${(pct(v,totalOverall)).toFixed(2)}%</td></tr>`
+      )).join('');
+    }
+
+    function renderCorrelationChart() {
+      const corr = analysisData?.violation_penalty_correlation || {};
+      const violations = Object.keys(corr);
+      const penalties = Array.from(new Set(violations.flatMap(v => Object.keys(corr[v] || {}))));
+      const data = [];
+      violations.forEach((v, vi) => {
+        penalties.forEach((p, pi) => {
+          const cell = corr[v]?.[p] || null;
+          const value = cell ? (cell.percentage || 0) : 0;
+          data.push([pi, vi, value]);
+        });
+      });
+      const chart = echarts.init(document.getElementById('correlation-chart'));
+      chart.setOption({
+        tooltip: Object.assign({}, TOOLTIP_COMMON, {
+          formatter: function(params){
+            const pi = params.data && Array.isArray(params.data) ? params.data[0] : null;
+            const vi = params.data && Array.isArray(params.data) ? params.data[1] : null;
+            const pName = (typeof pi === 'number' && penalties[pi] !== undefined) ? penalties[pi] : '';
+            const vName = (typeof vi === 'number' && violations[vi] !== undefined) ? violations[vi] : '';
+            const val = params.data && Array.isArray(params.data) ? params.data[2] : params.value;
+            return (pName && vName) ? `${pName} + ${vName}<br/>占比: ${Number(val).toFixed(2)}%` : `占比: ${Number(val).toFixed(2)}%`;
+          }
+        }),
+        grid: { left: 120, top: 60, right: 40, bottom: 80 },
+        xAxis: { type: 'category', data: penalties, axisLabel: { rotate: 30, color: '#000' } },
+        yAxis: { type: 'category', data: violations, axisLabel: { color: '#000' } },
+        visualMap: { min: 0, max: 100, calculable: true, orient: 'horizontal', left: 'center', bottom: 20,
+          inRange: { color: ['#e5e7eb','#22c55e','#1e3a8a','#f59e0b','#fb6a4a','#cb181d'] } },
+        series: [{ type: 'heatmap', data, label: { show: true, color: '#000', formatter: p => (Number(p.data[2]).toFixed(2) + '%') } }]
+      });
+    }
+
+    function renderIndustryDistribution() {
+      const dist = Array.isArray(analysisData?.financial_industry_distribution) ? analysisData.financial_industry_distribution : [];
+      const chart = echarts.init(document.getElementById('industry-chart'));
+      const categories = dist.map(it => it.industry);
+      const values = dist.map(it => it.count);
+      chart.setOption({
+        color: ['#1e3a8a'],
+        tooltip: TOOLTIP_COMMON,
+        grid: { left: 60, right: 30, top: 40, bottom: 60 },
+        xAxis: { type: 'category', data: categories, axisLabel: { color: '#000', rotate: 30 } },
+        yAxis: { type: 'value', axisLabel: { color: '#000' } },
+        series: [{ type: 'bar', data: values, label: { show: true, position: 'top', color: '#000' } }]
+      });
+      const tbody = document.getElementById('industry-table');
+      tbody.innerHTML = dist.map(it => (
+        `<tr class="border-b"><td class="px-4 py-2 text-sm text-gray-700">${it.industry}</td><td class="px-4 py-2 text-sm text-gray-700">${it.count}</td><td class="px-4 py-2 text-sm text-gray-700">${(it.percentage||0).toFixed(2)}%</td><td class="px-4 py-2 text-sm text-gray-700">${it.rank ?? ''}</td></tr>`
+      )).join('');
+    }
+
+    function renderFraudMethods() {
+      const fm = analysisData?.financial_violation_details?.fraud_method_counts || {};
+      const data = Object.entries(fm).map(([n,v]) => ({ name: n, value: v }));
+      const chart = echarts.init(document.getElementById('fraud-methods-chart'));
+      chart.setOption({
+        color: PALETTE,
+        title: { text: '造假手段统计', left: 'center', textStyle: { color: '#000' } },
+        tooltip: TOOLTIP_COMMON,
+        series: [{ type: 'pie', radius: ['35%','65%'], label: { show: true, color:'#000', position: 'inside', formatter: function(p){ return p.name + '\n' + (p.percent).toFixed(2) + '%'; } }, data }]
+      });
+    }
+
+    function renderRepresentativeCases() {
+      const cases = analysisData?.financial_violation_details?.representative_cases || [];
+      const container = document.getElementById('representative-cases');
+      if (!cases.length) {
+        container.innerHTML = '<div class="text-center text-gray-500 py-4">暂无代表性案件</div>';
+        return;
+      }
+      function sanitize(str){
+        if (!str) return '';
+        return String(str).replace(/[<>]/g, '');
+      }
+      function trimText(str, maxLen=280){
+        const s = sanitize(str);
+        return s.length > maxLen ? s.slice(0, maxLen) + '…' : s;
+      }
+      container.innerHTML = cases.slice(0, 10).map(c => {
+        const subject = sanitize(c.subject || '—');
+        const fraud = sanitize(c.fraud_method || '—');
+        const caseNo = sanitize(c.case_number || '—');
+        const amt = (typeof c.penalty_amount === 'number') ? (c.penalty_amount + ' 万元') : '—';
+        const cnt = (typeof c.count === 'number') ? c.count : '';
+        const desc = trimText(c.violation_behavior || '');
+        return `
+          <div class="border rounded-lg p-4 bg-white">
+            <div class="flex items-center justify-between">
+              <div class="font-bold text-lg text-gray-800">${subject}</div>
+              <div class="text-sm text-gray-500">案件编号：${caseNo}</div>
+            </div>
+            <div class="mt-1 text-sm text-gray-600">违规手段：<span class="font-semibold">${fraud}</span>${cnt?`（样本计数：${cnt}）`:''}</div>
+            <div class="mt-1 text-sm text-gray-600">处罚金额：${amt}</div>
+            <div class="mt-3 text-gray-700 leading-relaxed">${desc}</div>
+          </div>`;
+      }).join('');
+    }
+  </script>
+</body>
+</html>
